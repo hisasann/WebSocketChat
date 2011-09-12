@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<html lang="JP">
+<head>
+	<meta charset="UTF-8">
+	<style type="text/css" media="screen">
+		body {
+			background-color: #525152;
+			color: #DDD;
+		}
+		
+		h1 {
+			font-size: 40px;
+			text-shadow: 2px 3px 2px #333, 2px 3px 2px #DDD, 2px 3px 2px #DDD, 2px 4px 4px #F80, 3px -3px 3px #FF75C8;
+		}
+		
+		ul {
+			 list-style-type: none;
+		}
+		
+		.text {
+			border: solid 2px #FF75C8;
+			color: #FF75C8;
+			font-size: 15px;
+			font-weight: bold;
+			text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+			border-radius: 50px;
+			-moz-border-radius: 50px;
+			-webkit-border-radius: 50px;
+			background: -webkit-gradient(linear, left top, left bottom, from(#DDD), to(white));
+			background: -moz-linear-gradient(#DDD, white);
+		}
+
+		.account {
+			width: 100px;
+		}
+
+		.message {
+			width: 400px;
+		}
+	</style>
+	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+	<script type="text/javascript">google.load("jquery", "1.6.3");</script>
+	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript">var port = <%= port %>;</script>
+	<script type="text/javascript" charset="utf-8">
+	$(function() {
+		var socket = io.connect("http://www28039u.sakura.ne.jp", { port: port });
+		socket.on("connect", function() {
+			console.log("connect");
+		});
+		
+		socket.on("message push", function(msg) {
+			$("#list").prepend($("<li>" + getNow() + " : " + msg + "</li>"));
+		});
+		
+		socket.on("disconnect", function(){
+			console.log("disconnect");
+		});
+		
+		$("#form").submit(function(event) {
+			event.preventDefault();
+			
+			var message = $("#message"),
+			    account = $("#account");
+			if (!message.val()) {
+				return;
+			}
+
+			socket.emit("message send", escapeHTML(account.val()) + " - " + escapeHTML(message.val()), function(msg) {
+			});
+
+			message.val("").focus();
+		});
+
+		function escapeHTML(str) {
+			var div = document.createElement('div');
+			var text = document.createTextNode(str);
+			div.appendChild(text);
+			return div.innerHTML;
+		}
+
+		function getNow() {
+			var now = new Date(),
+				year = now.getFullYear(),
+				mon  = now.getMonth() + 1,
+				date = now.getDate(),
+				hour = now.getHours(),
+				min  = now.getMinutes(),
+				sec  = now.getSeconds();
+			return [year, "/", mon, "/", date, " ", hour, ":", min, ":", sec].join("");
+		}
+	});
+	</script>
+	<title>WebSocketChat</title>
+</head>
+<body>
+	<section>
+		<h1>WebSocketChat</h1>
+		<h2>ここでつぶやいたことはきっと誰かが見てくれてるよっ！</h2>
+
+		<form action="" id="form">
+			Name: <input type="text" id="account" class="text account">
+			Message: <input type="text" id="message" class="text message">
+			<input type="submit" value="Post">
+		</form>
+
+		<ul id="list" class="messageList"></ul>
+	</section>
+</body>
+</html>

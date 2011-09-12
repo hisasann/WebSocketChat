@@ -37,6 +37,20 @@
 		.message {
 			width: 400px;
 		}
+		
+		.member {
+			position: fixed;
+			bottom: 0px;
+			right: 0px;
+			width: 200px;
+			height: 300px;
+			overflow: auto;
+			border: 1px solid;
+		}
+		
+		.member p {
+			margin: 0px;
+		}
 	</style>
 	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
 	<script type="text/javascript">google.load("jquery", "1.6.3");</script>
@@ -49,8 +63,18 @@
 			console.log("connect");
 		});
 		
+		var title = $("title"),
+			defaultTitle = title.text();
 		socket.on("message push", function(msg) {
-			$("#list").prepend($("<li>" + getNow() + " : " + msg + "</li>"));
+			var text = escapeHTML(msg);
+			$("#list").prepend($("<li>" + getNow() + " : " + text + "</li>"));
+
+			title.text("(New)" + defaultTitle);
+			setTimeout(function() {
+				title.text(defaultTitle);
+			}, 2000);
+
+			showMember(text.match(/^.*-\[(.+)\]-.*$/)[1]);
 		});
 		
 		socket.on("disconnect", function(){
@@ -66,11 +90,28 @@
 				return;
 			}
 
-			socket.emit("message send", escapeHTML(account.val()) + " - " + escapeHTML(message.val()), function(msg) {
+			socket.emit("message send", ["-[", account.val(), "]- ", message.val()].join(""), function(msg) {
 			});
 
 			message.val("").focus();
 		});
+
+		var members = [],
+			memberElem = $("#members");
+		function showMember(account) {
+			var isMember = false;
+			
+			for (var i=0,len=members.length; i<len; i++) {
+				if (members[i] == account) {
+					isMember = true;
+				}
+			}
+			
+			if (!isMember) {
+				members.push(account);
+				memberElem.append("<p>" + account + "</p>");
+			}
+		}
 
 		function escapeHTML(str) {
 			var div = document.createElement('div');
@@ -87,7 +128,7 @@
 				hour = now.getHours(),
 				min  = now.getMinutes(),
 				sec  = now.getSeconds();
-			return [year, "/", mon, "/", date, " ", hour, ":", min, ":", sec].join("");
+			return [year, "/", mon, "/", date, " ", hour, ":", min].join("");
 		}
 	});
 	</script>
@@ -105,6 +146,13 @@
 		</form>
 
 		<ul id="list" class="messageList"></ul>
+		
+		<div id="members" class="member">
+			<h3>
+				メンバー
+			</h3>
+			<hr>
+		</div>
 	</section>
 </body>
 </html>

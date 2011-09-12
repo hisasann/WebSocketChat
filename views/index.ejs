@@ -65,16 +65,16 @@
 		
 		var title = $("title"),
 			defaultTitle = title.text();
-		socket.on("message push", function(msg) {
-			var text = escapeHTML(msg);
-			$("#list").prepend($("<li>" + getNow() + " : " + text + "</li>"));
+		socket.on("message push", function(data) {
+			var json = $.parseJSON(data);
+			$("#list").prepend($("<li>" + getNow() + " : " + escapeHTML(json.account) + " - " + escapeHTML(json.message) + "</li>"));
 
 			title.text("(New)" + defaultTitle);
 			setTimeout(function() {
 				title.text(defaultTitle);
 			}, 2000);
 
-			showMember(text.match(/^.*-\[(.+)\]-.*$/)[1]);
+			showMember(escapeHTML(json.account));
 		});
 		
 		socket.on("disconnect", function(){
@@ -90,8 +90,11 @@
 				return;
 			}
 
-			socket.emit("message send", ["-[", account.val(), "]- ", message.val()].join(""), function(msg) {
-			});
+			var data = {
+				account: account.val(),
+				message: message.val()
+			}
+			socket.emit("message send", JSON.stringify(data), function(msg) {});
 
 			message.val("").focus();
 		});
